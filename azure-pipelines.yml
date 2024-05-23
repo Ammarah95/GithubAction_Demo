@@ -1,0 +1,35 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+jobs:
+- job: Run_JMeter_Tests
+  displayName: 'Run JMeter Performance Tests'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
+
+  - script: |
+      echo "Installing JMeter"
+      sudo apt-get update
+      sudo apt-get install -y wget
+      wget https://downloads.apache.org//jmeter/binaries/apache-jmeter-5.4.1.tgz
+      tar -xzf apache-jmeter-5.4.1.tgz
+      export PATH=$PATH:$(pwd)/apache-jmeter-5.4.1/bin
+    displayName: 'Install JMeter'
+
+  - script: |
+      echo "Running JMeter tests"
+      jmeter -n -t GA_Demo.jmx -l results.jtl -e -o results
+    displayName: 'Run JMeter Tests'
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: 'results.jtl'
+      failTaskOnFailedTests: true
+    displayName: 'Publish JMeter Test Results'
